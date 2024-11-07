@@ -1,5 +1,6 @@
 #root {
   text-align: center;
+  margin: auto;
 }
 
 .logo {
@@ -36,4 +37,10 @@
 
 .read-the-docs {
   color: #888;
+}
+.stl-viewer{
+  background-color: lightgray;
+  border-radius: 10px;
+  margin: auto;
+  margin-bottom: 100px;
 }

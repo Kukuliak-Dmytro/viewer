@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { STLLoader } from 'three/examples/jsm/Addons.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
+import { useFileContext } from './App';
 
 const ThreeDViewer: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -9,6 +10,8 @@ const ThreeDViewer: React.FC = () => {
   const [scene] = useState(() => new THREE.Scene());
   const [camera] = useState(() => new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 5000));
   const [controls, setControls] = useState<OrbitControls | null>(null);
+  const { file } = useFileContext();
+  const [currentMesh, setCurrentMesh] = useState<THREE.Mesh | null>(null);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -32,35 +35,24 @@ const ThreeDViewer: React.FC = () => {
 
     const lights = [
       new THREE.PointLight(0xc4c4c4, 0, 300, 500),
-      new THREE.PointLight(0xc4c4c4,  500, 100, 0),
-      new THREE.PointLight(0xc4c4c4,  0, 100, -500),
-      new THREE.PointLight(0xc4c4c4,  -500, 300, 0),
+      new THREE.PointLight(0xc4c4c4, 500, 100, 0),
+      new THREE.PointLight(0xc4c4c4, 0, 100, -500),
+      new THREE.PointLight(0xc4c4c4, -500, 300, 0),
     ];
     lights.forEach(light => scene.add(light));
 
     // Set up the renderer
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(window.innerWidth*0.5, window.innerHeight*0.75);
     mount.appendChild(renderer.domElement);
 
     // Set up the controls
     const orbitControls = new OrbitControls(camera, renderer.domElement);
     setControls(orbitControls);
 
-    // Load the STL model
-    const loader = new STLLoader();
-    loader.load('../assets/75.220.5.stl', geometry => {
-      const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.scale.set(5, 5, 5);
-      scene.add(mesh);
-      renderer.render(scene, camera);
-      animate();
-    });
-
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setSize(window.innerWidth*0.5, window.innerHeight*0.75);
       renderer.render(scene, camera);
     };
 
@@ -85,12 +77,38 @@ const ThreeDViewer: React.FC = () => {
     }
   }, [controls, renderer, scene, camera]);
 
+  useEffect(() => {
+    if (file) {
+      const loader = new STLLoader();
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const contents = event.target?.result;
+        if (contents) {
+          if (currentMesh) {
+            scene.remove(currentMesh);
+          }
+          const geometry = loader.parse(contents);
+          const material = new THREE.MeshMatcapMaterial({
+            color: 0xffffff,
+          });
+          const mesh = new THREE.Mesh(geometry, material);
+          mesh.scale.set(5, 5, 5);
+          scene.add(mesh);
+          setCurrentMesh(mesh);
+          renderer.render(scene, camera);
+          animate();
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  }, [file]);
+
   const animate = () => {
     requestAnimationFrame(animate);
     renderer.render(scene, camera);
   };
 
-  return <div ref={mountRef} style={{ width: '100%', height: '100%' }} />;
+  return <div ref={mountRef} className='stl-viewer' />;
 };
 
 export default ThreeDViewer;
