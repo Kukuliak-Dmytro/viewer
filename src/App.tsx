@@ -1,4 +1,4 @@
-import { createContext, useState, useContext } from 'react';
+import { createContext, useState, useContext,useRef } from 'react';
 import reactLogo from './assets/react.svg';
 import viteLogo from '/vite.svg';
 import './App.css';
@@ -9,17 +9,23 @@ interface FileContextType {
   file: File | null;
   setFile: (file: File | null) => void;
 }
-
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
 function App() {
   const [file, setFile] = useState<File | null>(null);
+  const fileRef=useRef(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
+      fileRef.current.value=e.target.files[0].name
     }
   };
+    const handleFileClose = () => {
+      setFile(null);
+      fileRef.current.value=''
+
+    };
 
   return (
     <>
@@ -33,7 +39,12 @@ function App() {
       </div>
       <h1>Three.js web viewer</h1>
       <div className="card">
-        <input type="file" onChange={handleFileChange} />
+        <span>
+          <label htmlFor="file">Choose file</label>
+          <input type="text" disabled ref={fileRef} />
+          <input type="file" onChange={handleFileChange} id='file'/>
+        </span>
+        <button onClick={handleFileClose}>Close</button>
       </div>
       <FileContext.Provider value={{ file, setFile }}>
         <ThreeDViewer />

@@ -41,11 +41,9 @@ const ThreeDViewer: React.FC = () => {
     ];
     lights.forEach(light => scene.add(light));
 
-    // Set up the renderer
     renderer.setSize(window.innerWidth*0.5, window.innerHeight*0.75);
     mount.appendChild(renderer.domElement);
 
-    // Set up the controls
     const orbitControls = new OrbitControls(camera, renderer.domElement);
     setControls(orbitControls);
 
@@ -54,6 +52,8 @@ const ThreeDViewer: React.FC = () => {
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth*0.5, window.innerHeight*0.75);
       renderer.render(scene, camera);
+      console.log("resize")
+
     };
 
     window.addEventListener('resize', handleResize);
@@ -100,6 +100,9 @@ const ThreeDViewer: React.FC = () => {
         }
       };
       reader.readAsArrayBuffer(file);
+    }
+    else if(file==null){
+      scene.remove(currentMesh!)
     }
   }, [file]);
 
