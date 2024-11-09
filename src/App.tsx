@@ -18,21 +18,23 @@ function App() {
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   //label for the file
-  const fileRef = useRef(null)
-  const selectRef=useRef(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const selectRef=useRef<HTMLSelectElement>(null)
   
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
       fileRef.current.value = e.target.files[0].name
-      selectRef.current.selectedIndex = 0;
+      selectRef.current.value = '';
     }
   };
   const handleFileClose = () => {
     setFile(null);
     setFileName(null);
     fileRef.current.value = ''
+    selectRef.current.value = '';
+
 
   };
   const handleFileSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -63,9 +65,9 @@ function App() {
         <span>
           <label htmlFor="file">Choose file</label>
           <input type="text" disabled ref={fileRef} />
-          <input type="file" onChange={handleFileChange} id='file' ref={selectRef}/>
+          <input type="file" onChange={handleFileChange} id='file' />
         </span>
-        <select name="fileSelect" id="select" onChange={handleFileSelect} >
+        <select name="fileSelect" id="select" onChange={handleFileSelect}ref={selectRef} >
           <option value="">Select a model</option>
           <option value="charmander.stl">Charmander</option>
           <option value="cup.stl">Cup</option>

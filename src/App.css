@@ -67,7 +67,15 @@
     display: none;
 
   }
-
+  #select{
+    height: 40px;
+    border-radius: 8px;
+    font-weight: 600;
+    background-color: gray;
+    color: white;
+    text-align: center;
+    font-size: 18px;
+  }
   label {
     display: flex;
     justify-content: center;
@@ -91,12 +99,14 @@
       scale: 0.95;
       background-color: #25ccfa;
     }
+   
   }
 
   button {
     background-color: rgba(255, 0, 0, 0.5);
     border: none;
     transition: all 0.3s;
+    height: 40px;
 
     &:hover {
       background-color: rgba(255, 0, 0, 1);
