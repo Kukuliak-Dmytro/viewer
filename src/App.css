@@ -51,12 +51,12 @@
 
 .card {
   display: flex;
-  align-items: center;
+  align-items: start;
   justify-content: space-evenly;
-  width: 90%;
+  width: 50%;
 
   span {
-    display: flex;
+
     input[type="text"]{
       border: none;
       padding-left: 10px;

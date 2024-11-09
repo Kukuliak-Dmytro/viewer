@@ -10,7 +10,7 @@ const ThreeDViewer: React.FC = () => {
   const [scene] = useState(() => new THREE.Scene());
   const [camera] = useState(() => new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 5000));
   const [controls, setControls] = useState<OrbitControls | null>(null);
-  const { file } = useFileContext();
+  const { file,fileName } = useFileContext();
   const [currentMesh, setCurrentMesh] = useState<THREE.Mesh | null>(null);
 
   useEffect(() => {
@@ -78,6 +78,9 @@ const ThreeDViewer: React.FC = () => {
   }, [controls, renderer, scene, camera]);
 
   useEffect(() => {
+    if(file==null || fileName==null){
+      scene.remove(currentMesh!)
+    }
     if (file) {
       const loader = new STLLoader();
       const reader = new FileReader();
@@ -101,10 +104,28 @@ const ThreeDViewer: React.FC = () => {
       };
       reader.readAsArrayBuffer(file);
     }
-    else if(file==null){
-      scene.remove(currentMesh!)
+    else if(fileName){
+      const loader = new STLLoader();
+      
+      loader.load(`../assets/${fileName}`, (geometry) => {
+        console.log(`../assets/${fileName}`)
+
+        if (currentMesh) {
+          scene.remove(currentMesh);  
+        }
+        const material = new THREE.MeshMatcapMaterial({
+          color: 0xffffff,
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.scale.set(5, 5, 5);
+        scene.add(mesh);
+        setCurrentMesh(mesh);
+        renderer.render(scene, camera);
+        animate();
+      });
     }
-  }, [file]);
+  
+  }, [file,fileName]);
 
   const animate = () => {
     requestAnimationFrame(animate);

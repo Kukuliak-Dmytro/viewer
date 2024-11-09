@@ -1,31 +1,52 @@
-import { createContext, useState, useContext,useRef } from 'react';
+import { createContext, useState, useContext, useRef } from 'react';
 import reactLogo from './assets/react.svg';
 import viteLogo from '/vite.svg';
 import './App.css';
 import ThreeDViewer from './ThreeDViewer';
+import { select } from 'three/webgpu';
 
 // Define the context and its type
 interface FileContextType {
   file: File | null;
+  fileName: string | null;
   setFile: (file: File | null) => void;
 }
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
 function App() {
+  //file itself
   const [file, setFile] = useState<File | null>(null);
-  const fileRef=useRef(null)
+  const [fileName, setFileName] = useState<string | null>(null);
+  //label for the file
+  const fileRef = useRef(null)
+  const selectRef=useRef(null)
+  
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
-      fileRef.current.value=e.target.files[0].name
+      fileRef.current.value = e.target.files[0].name
+      selectRef.current.selectedIndex = 0;
     }
   };
-    const handleFileClose = () => {
-      setFile(null);
-      fileRef.current.value=''
+  const handleFileClose = () => {
+    setFile(null);
+    setFileName(null);
+    fileRef.current.value = ''
 
-    };
+  };
+  const handleFileSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const fileName = e.target.value;
+    console.log(fileName)
+    if (fileName) {
+      setFile(null)
+      setFileName(fileName);
+      fileRef.current.value = fileName
+    } else {
+      setFile(null);
+      setFileName(null);
+    }
+  };
 
   return (
     <>
@@ -42,11 +63,21 @@ function App() {
         <span>
           <label htmlFor="file">Choose file</label>
           <input type="text" disabled ref={fileRef} />
-          <input type="file" onChange={handleFileChange} id='file'/>
+          <input type="file" onChange={handleFileChange} id='file' ref={selectRef}/>
         </span>
+        <select name="fileSelect" id="select" onChange={handleFileSelect} >
+          <option value="">Select a model</option>
+          <option value="charmander.stl">Charmander</option>
+          <option value="cup.stl">Cup</option>
+          <option value="keycap.stl">Keycap</option>
+          <option value="squirtle.stl">Squirtle</option>
+          <option value="bowl.stl">Bowl</option>
+          <option value="bulbasaur.stl">Bulbasaur</option>
+
+        </select>
         <button onClick={handleFileClose}>Close</button>
       </div>
-      <FileContext.Provider value={{ file, setFile }}>
+      <FileContext.Provider value={{ file, setFile,fileName }}>
         <ThreeDViewer />
       </FileContext.Provider>
     </>
