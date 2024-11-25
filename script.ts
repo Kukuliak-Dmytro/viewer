@@ -1,11 +1,11 @@
 import * as THREE from 'three';
-import { OrbitControls,STLLoader, TransformControls } from 'three/examples/jsm/Addons.js';
+import { OrbitControls, STLLoader, TransformControls } from 'three/examples/jsm/Addons.js';
 
-let renderer, scene, camera, controls, transformControls, currentMesh;
+let renderer, scene, camera, controls, transformControls, currentMesh, rotationInput, rotation;
 
 function init() {
   const canvas = document.getElementById('canvas');
-  
+
   renderer = new THREE.WebGLRenderer({ antialias: true });
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 1500);
@@ -18,7 +18,7 @@ function init() {
 
   const hlight = new THREE.AmbientLight(0x404040, 100);
   scene.add(hlight);
-  controls=new OrbitControls(camera,renderer.domElement)
+  controls = new OrbitControls(camera, renderer.domElement)
   const directionalLight = new THREE.DirectionalLight(0xffffff, 100);
   directionalLight.position.set(0, 1, 0);
   directionalLight.castShadow = true;
@@ -34,7 +34,7 @@ function init() {
 
   renderer.setSize(window.innerWidth * 0.5, window.innerHeight * 0.75);
   canvas!.appendChild(renderer.domElement);
-
+  transformControls = new TransformControls(camera, renderer.domElement)
   createFloor();
   window.addEventListener('resize', handleResize);
 
@@ -48,11 +48,35 @@ function handleResize() {
   renderer.render(scene, camera);
 }
 
- export function loadFile() {
+document.getElementById('rotation-x')?.addEventListener('input', () => {
+  rotationInput = document.getElementById('rotation-x') as HTMLInputElement;
+  rotation = rotationInput ? parseInt(rotationInput.value) : 0;
+  console.log(rotation);
+  if (currentMesh) {
+    currentMesh.rotation.x = rotation / 180 * Math.PI;
+  }
+});
+document.getElementById('rotation-y')?.addEventListener('input', () => {
+  rotationInput = document.getElementById('rotation-y') as HTMLInputElement;
+  rotation = rotationInput ? parseInt(rotationInput.value) : 0;
+  console.log(rotation);
+  if (currentMesh) {
+    currentMesh.rotation.y = rotation / 180 * Math.PI;
+  }
+});
+document.getElementById('rotation-z')?.addEventListener('input', () => {
+  rotationInput = document.getElementById('rotation-z') as HTMLInputElement;
+  rotation = rotationInput ? parseInt(rotationInput.value) : 0;
+  console.log(rotation);
+  if (currentMesh) {
+    currentMesh.rotation.z = rotation / 180 * Math.PI;
+  }
+});
+export function loadFile() {
   const fileInput = document.getElementById('file-input') as HTMLInputElement;
   const file = fileInput!.files![0];
-  const rotationInput = document.getElementById('rotation') as HTMLInputElement;
-  const rotation = rotationInput ? parseInt(rotationInput.value) : 0;
+
+
 
   if (!file) {
     scene.remove(currentMesh);
@@ -71,24 +95,23 @@ function handleResize() {
       }
       const geometry = loader.parse(contents);
       const material = new THREE.MeshMatcapMaterial({ color: 0xffffff });
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.scale.set(0.1, 0.1, 0.1);
-      mesh.position.set(0, 3, 0);
-      scene.add(mesh);
-      currentMesh = mesh;
+      currentMesh = new THREE.Mesh(geometry, material);
+      currentMesh.scale.set(0.1, 0.1, 0.1);
+      currentMesh.position.set(0, 3, 0);
+      transformControls.attach(currentMesh)
+      scene.add(transformControls.getHelper())
+      scene.add(currentMesh);
       renderer.render(scene, camera);
     }
   };
   reader.readAsArrayBuffer(file);
 
-  if (currentMesh) {
-    currentMesh.rotation.x = rotation * (Math.PI / 180);
-    renderer.render(scene, camera);
-  }
+
 }
 
-export function closeFile(){
+export function closeFile() {
   scene.remove(currentMesh)
+  transformControls.detach()
 }
 function animate() {
   requestAnimationFrame(animate);
