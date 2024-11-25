@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import { OrbitControls, STLLoader, TransformControls } from 'three/examples/jsm/Addons.js';
+import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
 
-let renderer, scene, camera, controls, transformControls, currentMesh, rotationInput, rotation;
+let renderer, scene, camera, controls, transformControls, currentMesh, inputfield, inputValue;
+let size = new THREE.Vector3(100, 1, 100);
 
 function init() {
   const canvas = document.getElementById('canvas');
@@ -12,13 +14,12 @@ function init() {
 
   scene.background = new THREE.Color(0xDDDDDD);
 
-  camera.position.set(-35, 70, 100);
+  camera.position.set(-150, 100, 150);
   camera.lookAt(new THREE.Vector3(0, 0, 0));
-
 
   const hlight = new THREE.AmbientLight(0x404040, 100);
   scene.add(hlight);
-  controls = new OrbitControls(camera, renderer.domElement)
+  controls = new OrbitControls(camera, renderer.domElement);
   const directionalLight = new THREE.DirectionalLight(0xffffff, 100);
   directionalLight.position.set(0, 1, 0);
   directionalLight.castShadow = true;
@@ -34,7 +35,16 @@ function init() {
 
   renderer.setSize(window.innerWidth * 0.5, window.innerHeight * 0.75);
   canvas!.appendChild(renderer.domElement);
-  transformControls = new TransformControls(camera, renderer.domElement)
+  transformControls = new TransformControls(camera, renderer.domElement);
+
+  // Disable OrbitControls when using TransformControls
+  transformControls.addEventListener('mouseDown', () => {
+    controls.enabled = false;
+  });
+  transformControls.addEventListener('mouseUp', () => {
+    controls.enabled = true;
+  });
+
   createFloor();
   window.addEventListener('resize', handleResize);
 
@@ -48,35 +58,30 @@ function handleResize() {
   renderer.render(scene, camera);
 }
 
-document.getElementById('rotation-x')?.addEventListener('input', () => {
-  rotationInput = document.getElementById('rotation-x') as HTMLInputElement;
-  rotation = rotationInput ? parseInt(rotationInput.value) : 0;
-  console.log(rotation);
-  if (currentMesh) {
-    currentMesh.rotation.x = rotation / 180 * Math.PI;
-  }
-});
-document.getElementById('rotation-y')?.addEventListener('input', () => {
-  rotationInput = document.getElementById('rotation-y') as HTMLInputElement;
-  rotation = rotationInput ? parseInt(rotationInput.value) : 0;
-  console.log(rotation);
-  if (currentMesh) {
-    currentMesh.rotation.y = rotation / 180 * Math.PI;
-  }
-});
-document.getElementById('rotation-z')?.addEventListener('input', () => {
-  rotationInput = document.getElementById('rotation-z') as HTMLInputElement;
-  rotation = rotationInput ? parseInt(rotationInput.value) : 0;
-  console.log(rotation);
-  if (currentMesh) {
-    currentMesh.rotation.z = rotation / 180 * Math.PI;
-  }
-});
+function addInputEventListener(elementId: string, axis: 'x' | 'y' | 'z' | 'scale' | 'color') {
+  document.getElementById(elementId)?.addEventListener('input', () => {
+    inputfield = document.getElementById(elementId) as HTMLInputElement;
+    inputValue = inputfield ? parseFloat(inputfield.value) : 0;
+    if (currentMesh) {
+      if (axis === 'scale') {
+        currentMesh.scale.set(inputValue, inputValue, inputValue);
+      } else if (axis === 'color') {
+        const color = inputfield.value;
+        (currentMesh.material as THREE.MeshMatcapMaterial).color.set(color);
+      } else {
+        currentMesh.rotation[axis] = inputValue / 180 * Math.PI;
+      }
+    }
+  });
+}
+addInputEventListener('rotation-x', 'x');
+addInputEventListener('rotation-y', 'y');
+addInputEventListener('rotation-z', 'z');
+addInputEventListener('scale', 'scale');
+addInputEventListener('color', 'color');
 export function loadFile() {
   const fileInput = document.getElementById('file-input') as HTMLInputElement;
   const file = fileInput!.files![0];
-
-
 
   if (!file) {
     scene.remove(currentMesh);
@@ -96,38 +101,89 @@ export function loadFile() {
       const geometry = loader.parse(contents);
       const material = new THREE.MeshMatcapMaterial({ color: 0xffffff });
       currentMesh = new THREE.Mesh(geometry, material);
-      currentMesh.scale.set(0.1, 0.1, 0.1);
-      currentMesh.position.set(0, 3, 0);
-      transformControls.attach(currentMesh)
-      scene.add(transformControls.getHelper())
+      currentMesh.position.set(0, 0, 0);
+
+      geometry.computeBoundingBox();
+      const boundingBox = geometry.boundingBox;
+      size = new THREE.Vector3();
+      boundingBox?.getSize(size);
+      console.log(size);
+      transformControls.size = Math.max(Math.max(size.x, size.y, size.z) * 0.025,1);
+      transformControls.minY = -5;
+      transformControls.attach(currentMesh);
+      scene.add(transformControls.getHelper());
       scene.add(currentMesh);
       renderer.render(scene, camera);
+
+      updateFloorSize(); // Update the floor size based on the new model size
     }
   };
   reader.readAsArrayBuffer(file);
-
-
 }
 
 export function closeFile() {
-  scene.remove(currentMesh)
-  transformControls.detach()
+  scene.remove(currentMesh);
+  transformControls.detach();
 }
+
+function saveMesh(mesh: THREE.Mesh, fileName: string) {
+  const exporter = new STLExporter();
+  const stlString = exporter.parse(mesh);
+
+  const blob = new Blob([stlString], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+
+  setTimeout(() => {
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }, 0);
+}
+
+document.getElementById('save-button')?.addEventListener('click', () => {
+  if (currentMesh) {
+    saveMesh(currentMesh, 'modified_mesh.stl');
+  } else {
+    console.log('No mesh to save');
+  }
+});
+
 function animate() {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
 }
 
 function createFloor() {
-  let pos = { x: 0, y: -1, z: 0 };
-  let scale = { x: 100, y: 1, z: 100 };
-  let blockPlane = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshPhongMaterial({ color: 0x8B4513 }));
+  const pos = { x: 0, y: -1, z: 0 };
+  const blockPlane = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 1, 1),
+    new THREE.MeshPhongMaterial({ color: 0x8B4513 })
+  );
   blockPlane.position.set(pos.x, pos.y, pos.z);
-  blockPlane.scale.set(scale.x, scale.y, scale.z);
+  blockPlane.scale.set(size.x, size.y, size.z);
   blockPlane.castShadow = true;
   blockPlane.receiveShadow = true;
+  blockPlane.name = 'floor'; // Set the name of the floor object
   scene.add(blockPlane);
   blockPlane.userData.ground = true;
+}
+
+function updateFloorSize() {
+  const minSize = new THREE.Vector3(100, 1, 100);
+  const floorSize = new THREE.Vector3(
+    Math.max(size.x*5, size.y*5,minSize.x),
+    1,
+    Math.max(size.x*5, size.y*5,minSize.x)
+  );
+  const floor = scene.getObjectByName('floor') as THREE.Mesh;
+  if (floor) {
+    floor.scale.set(floorSize.x, floorSize.y, floorSize.z);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);

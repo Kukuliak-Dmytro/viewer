@@ -71,6 +71,10 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+.card{
+  display:flex;
+  background-color:red;
+}
 button:hover {
   border-color: #646cff;
 }

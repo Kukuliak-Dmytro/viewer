@@ -28,20 +28,10 @@
       <h1>Hello Vite!</h1>
       <div className="card">
         <span>
-          <label htmlFor="file">Choose file</label>
-          <input type="text" disabled id="file-name" />
           <input type="file" onchange="loadFile()" id='file-input' />
         </span>
-        <select name="fileSelect" id="file-select" onchange='loadFile()'>
-          <option value="">Select a model</option>
-          <option value="charmander.stl">Charmander</option>
-          <option value="cup.stl">Cup</option>
-          <option value="keycap.stl">Keycap</option>
-          <option value="squirtle.stl">Squirtle</option>
-          <option value="bowl.stl">Bowl</option>
-          <option value="bulbasaur.stl">Bulbasaur</option>
-        </select>
         <button onclick="closeFile()">Close</button>
+        <button id="save-button">Save Mesh</button>
         <div>
           <label htmlFor="rotation-x">rotationX: </label>
           <input type="range" id="rotation-x" name="rotation-x" min="0" max="360" step="1" />
@@ -55,6 +45,16 @@
         <div>
           <label htmlFor="rotation-z">rotationZ: </label>
           <input type="range" id="rotation-z" name="rotation-z" min="0" max="360" step="1" />
+          <span></span>
+        </div>
+        <div>
+          <label htmlFor="rotation-z">scale: </label>
+          <input type="range" id="scale" name="scale" min="0.1" max="2" step="0.01" />
+          <span></span>
+        </div>
+        <div>
+          <label for="color">Color: </label>
+          <input type="color" id="color" name="color" />
           <span></span>
         </div>
       </div>
